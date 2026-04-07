@@ -216,6 +216,7 @@ final class NeewerLiteServer {
                     .forEach { viewObj in
                          Task { @MainActor in
                             viewObj.changeToCCTMode()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
                             viewObj.device.setCCTLightValues(brr: CGFloat(payload.brightness), cct: CGFloat(payload.temperature), gmm: CGFloat(viewObj.device.gmmValue.value))
                         }
                     }
@@ -250,6 +251,7 @@ final class NeewerLiteServer {
                         if viewObj.device.supportRGB {
                             Task { @MainActor in
                                 viewObj.changeToHSIMode()
+                                try? await Task.sleep(nanoseconds: 100_000_000)
                                 viewObj.updateHSI(hue: hueVal, sat: satVal, brr: CGFloat(payload.brightness))
                             }
                         }
@@ -281,6 +283,7 @@ final class NeewerLiteServer {
                     .forEach { viewObj in
                         Task { @MainActor in
                             viewObj.changeToHSIMode()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
                             viewObj.updateHSI(hue: hueVal, sat: CGFloat(viewObj.device.satValue.value), brr: CGFloat(viewObj.device.brrValue.value))
                         }
                     }
@@ -312,6 +315,7 @@ final class NeewerLiteServer {
                     .forEach { viewObj in
                         Task { @MainActor in
                             viewObj.changeToHSIMode()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
                             viewObj.updateHSI(hue: CGFloat(viewObj.device.hueValue.value), sat: satVal, brr: CGFloat(viewObj.device.brrValue.value))
                         }
                     }
@@ -344,6 +348,7 @@ final class NeewerLiteServer {
                             if payload.fx9 > 0 && payload.fx9 <= viewObj.device.maxChannel {
                                 Task { @MainActor in
                                     viewObj.changeToSCEMode()
+                                    try? await Task.sleep(nanoseconds: 100_000_000)
                                     viewObj.changeToSCE(payload.fx9, CGFloat(viewObj.device.brrValue.value))
                                 }
                             }
@@ -352,6 +357,7 @@ final class NeewerLiteServer {
                             if payload.fx17 > 0 && payload.fx17 <= viewObj.device.maxChannel {
                                 Task { @MainActor in
                                     viewObj.changeToSCEMode()
+                                    try? await Task.sleep(nanoseconds: 100_000_000)
                                     viewObj.changeToSCE(payload.fx17, CGFloat(viewObj.device.brrValue.value))
                                 }
                             }
@@ -459,6 +465,7 @@ final class NeewerLiteServer {
                         resultFxName = nextFx.name
                         Task { @MainActor in
                             viewObj.changeToSCEMode()
+                            try? await Task.sleep(nanoseconds: 100_000_000)
                             dev.sendSceneCommand(nextFx)
                         }
                     }
