@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24112" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24112"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner"/>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="c22-O7-iKe">
+            <rect key="frame" x="0.0" y="0.0" width="480" height="298"/>
+            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+            <subviews>
+                <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Nno-gV-EAg">
+                    <rect key="frame" x="13" y="57" width="121" height="82"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <textFieldCell key="cell" title="Label" id="gaf-4a-q1P">
+                        <font key="font" metaFont="system" size="18"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <switch horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" controlSize="large" baseWritingDirection="leftToRight" alignment="left" translatesAutoresizingMaskIntoConstraints="NO" id="mWp-1k-U9L">
+                    <rect key="frame" x="18" y="12" width="42" height="25"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <connections>
+                        <action selector="toggleAction:" target="XuX-Dg-DgW" id="gc4-Hr-Uln"/>
+                    </connections>
+                </switch>
+                <tabView drawsBackground="NO" id="7dk-ru-C1M">
+                    <rect key="frame" x="133" y="10" width="334" height="274"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" heightSizable="YES"/>
+                    <font key="font" metaFont="system"/>
+                    <connections>
+                        <outlet property="delegate" destination="XuX-Dg-DgW" id="lnv-Yx-6TN"/>
+                    </connections>
+                </tabView>
+                <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="vuc-wv-ctg">
+                    <rect key="frame" x="20" y="158" width="99" height="106"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="mLH-Rk-Wz0"/>
+                </imageView>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Rjc-Y1-ZWd">
+                    <rect key="frame" x="110" y="18" width="16" height="15"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <buttonCell key="cell" type="smallSquare" bezelStyle="smallSquare" image="gearshape" catalog="system" imagePosition="overlaps" alignment="center" lineBreakMode="truncatingTail" state="on" imageScaling="proportionallyDown" inset="2" id="Vn3-tL-F4z">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="moreAction:" target="XuX-Dg-DgW" id="fny-Ve-eYn"/>
+                    </connections>
+                </button>
+            </subviews>
+            <point key="canvasLocation" x="-303" y="-501"/>
+        </customView>
+        <collectionViewItem id="XuX-Dg-DgW" customClass="CollectionViewItem" customModule="NeewerLite" customModuleProvider="target">
+            <connections>
+                <outlet property="imageView" destination="vuc-wv-ctg" id="qKO-0Z-WbQ"/>
+                <outlet property="lightModeTabView" destination="7dk-ru-C1M" id="tVG-t9-bf6"/>
+                <outlet property="moreactionButton" destination="Rjc-Y1-ZWd" id="SIw-l2-dof"/>
+                <outlet property="nameField" destination="Nno-gV-EAg" id="cjn-1J-cbY"/>
+                <outlet property="switchButton" destination="mWp-1k-U9L" id="t55-DB-mDZ"/>
+                <outlet property="view" destination="c22-O7-iKe" id="aNf-b7-zes"/>
+            </connections>
+        </collectionViewItem>
+    </objects>
+    <resources>
+        <image name="gearshape" catalog="system" width="16" height="16"/>
+    </resources>
+</document>
