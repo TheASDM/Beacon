@@ -306,7 +306,7 @@ class NeewerLightConstant {
 
                 fxs.append(NeewerLightFX(id: 0x7, name: "Paparazzi", brr: true))
                 fxs.append(NeewerLightFX(id: 0x8, name: "Screen", brr: true))
-                fxs.append(NeewerLightFX(id: 0x9, name: "Lighting", brr: true))
+                fxs.append(NeewerLightFX(id: 0x9, name: "Lightning", brr: true))
             }
         }
         return fxs

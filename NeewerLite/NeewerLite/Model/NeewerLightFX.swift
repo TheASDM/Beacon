@@ -184,9 +184,9 @@ extension NeewerLightFX {
         return scene
     }
 
-    // Class method to create a "Lighting" scene
+    // Class method to create a "Lightning" scene
     class func lightingScene() -> NeewerLightFX {
-        let scene = NeewerLightFX(id: 0x01, name: "Lighting")
+        let scene = NeewerLightFX(id: 0x01, name: "Lightning")
         scene.iconName = "bolt.fill"
         scene.needBRR = true
         scene.needCCT = true

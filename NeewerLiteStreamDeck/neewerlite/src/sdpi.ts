@@ -51,7 +51,7 @@ export type FXItem = {
 
 export function getFX17Items(): FXItem[] {
     return [
-        { value: '1', label: 'Lighting' },
+        { value: '1', label: 'Lightning' },
         { value: '2', label: 'Paparazzi' },
         { value: '3', label: 'Defective bulb' },
         { value: '4', label: 'Explosion' },
@@ -81,6 +81,6 @@ export function getFX9Items(): FXItem[] {
         { value: '6', label: 'Candle Light' },
         { value: '7', label: 'Paparazzi' },
         { value: '8', label: 'Screen' },
-        { value: '9', label: 'Lighting' },
+        { value: '9', label: 'Lightning' },
     ];
 }
