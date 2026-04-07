@@ -3,6 +3,7 @@ import AppKit
 
 struct MainView: View {
     var appState: AppState
+    @State private var scanTimeRemaining: Int = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,7 +22,11 @@ struct MainView: View {
                 Button {
                     triggerScan()
                 } label: {
-                    Label(appState.isScanning ? "Scanning..." : "Scan", systemImage: "antenna.radiowaves.left.and.right")
+                    if appState.isScanning {
+                        Label("Scanning \(scanTimeRemaining)s", systemImage: "antenna.radiowaves.left.and.right")
+                    } else {
+                        Label("Scan", systemImage: "antenna.radiowaves.left.and.right")
+                    }
                 }
                 .disabled(appState.isScanning)
             }
@@ -107,13 +112,18 @@ struct MainView: View {
     private func triggerScan() {
         guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
         appState.isScanning = true
+        scanTimeRemaining = 10
         appDelegate.scanningNewLightMode = true
         appDelegate.scanningViewObjects.removeAll()
         appDelegate.scanAction(NSButton())
-        // Stop after 10 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-            appDelegate.scanningNewLightMode = false
-            appState.isScanning = false
+        // Countdown timer
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
+            scanTimeRemaining -= 1
+            if scanTimeRemaining <= 0 {
+                timer.invalidate()
+                appDelegate.scanningNewLightMode = false
+                appState.isScanning = false
+            }
         }
     }
 
