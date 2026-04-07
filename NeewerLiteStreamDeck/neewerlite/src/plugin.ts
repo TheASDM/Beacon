@@ -11,6 +11,12 @@ import { HSTKeyControl } from './actions/hst_key';
 import { HUEControl } from './actions/hue';
 import { SATControl } from './actions/sat';
 import { FXKeyControl } from './actions/fx_key';
+import { GMControl } from './actions/gm';
+import { ModeCCTControl } from './actions/mode_cct';
+import { ModeHSIControl } from './actions/mode_hsi';
+import { FXCycleControl } from './actions/fx_cycle';
+import { SourceCycleControl } from './actions/source_cycle';
+import { FXSpeedControl } from './actions/fx_speed';
 
 // We can enable "trace" logging so that all messages between the Stream Deck, and the plugin are recorded. When storing sensitive information
 streamDeck.logger.setLevel(LogLevel.INFO);
@@ -26,6 +32,12 @@ streamDeck.actions.registerAction(new HSTKeyControl());
 streamDeck.actions.registerAction(new HUEControl());
 streamDeck.actions.registerAction(new SATControl());
 streamDeck.actions.registerAction(new FXKeyControl());
+streamDeck.actions.registerAction(new GMControl());
+streamDeck.actions.registerAction(new ModeCCTControl());
+streamDeck.actions.registerAction(new ModeHSIControl());
+streamDeck.actions.registerAction(new FXCycleControl());
+streamDeck.actions.registerAction(new SourceCycleControl());
+streamDeck.actions.registerAction(new FXSpeedControl());
 
 // Finally, connect to the Stream Deck.
 streamDeck.connect();

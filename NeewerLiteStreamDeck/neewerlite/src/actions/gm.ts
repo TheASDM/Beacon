@@ -1,74 +1,78 @@
 import streamDeck, {
     action,
-    DidReceiveSettingsEvent,
     DialAction,
     DialRotateEvent,
     DialUpEvent,
     SingletonAction,
     WillAppearEvent,
     type JsonValue,
-    type KeyDownEvent,
     type SendToPluginEvent,
 } from '@elgato/streamdeck';
-import type { GlobalSettings, Light, DataSourcePayload, DataSourceResult } from '../sdpi';
-import { fetchListLights, setLightsHUE, toggleLights } from '../ipc';
+import type { GlobalSettings, Light } from '../sdpi';
+import { setLightsGM, toggleLights } from '../ipc';
 
-@action({ UUID: 'com.beyondcow.neewerlite.lightcontrol.hue' })
-export class HUEControl extends SingletonAction<DialSettings> {
-    #getTitle(): string {
-        return streamDeck.i18n.t('hue');
-    }
-
-    syncSettings2UI(action: DialAction, settings: DialSettings) {
-        settings.hue = Number(settings.hue);
+@action({ UUID: 'com.beyondcow.neewerlite.lightcontrol.gm' })
+export class GMControl extends SingletonAction<GMSettings> {
+    syncSettings2UI(action: DialAction, settings: GMSettings) {
+        settings.gmm = Number(settings.gmm);
         if (settings.selectedLights == undefined) {
             settings.selectedLights = [];
         }
         action.setSettings(settings);
-        action.setFeedback({ indicator: { value: settings.hue / 3.6 }, value: settings.hue });
+        const indicatorValue = ((settings.gmm + 50) / 100) * 100;
+        const displayValue = settings.gmm > 0 ? `+${settings.gmm}` : `${settings.gmm}`;
         action.setFeedback({
-            title: `${this.#getTitle()}`,
-            icon: 'imgs/actions/hue/icon',
+            indicator: { value: indicatorValue },
+            value: displayValue,
+        });
+        action.setFeedback({
+            title: 'GM',
+            icon: 'imgs/actions/gm/icon',
         });
     }
 
-    override async onWillAppear(ev: WillAppearEvent<DialSettings>): Promise<void> {
+    override async onWillAppear(ev: WillAppearEvent<GMSettings>): Promise<void> {
         if (!ev.action.isDial()) return;
         let settings = ev.payload.settings;
-        if (settings.hue == null) {
-            settings.hue = 0;
+        if (settings.gmm == null) {
+            settings.gmm = 0;
+        }
+        if (settings.selectedLights == undefined) {
+            settings.selectedLights = [];
         }
         let { lights = [] } = await streamDeck.settings.getGlobalSettings<GlobalSettings>();
         for (const light of lights) {
             if (light.state == -1) {
-                //offline
                 continue;
             }
             settings.light_state = light.state == 1;
-            //settings.hue = light.hue;
+            if ((light as any).gmm != null) {
+                settings.gmm = Number((light as any).gmm);
+            }
             break;
         }
+        const indicatorValue = ((settings.gmm + 50) / 100) * 100;
+        const displayValue = settings.gmm > 0 ? `+${settings.gmm}` : `${settings.gmm}`;
         ev.action.setSettings(settings);
         ev.action.setFeedback({
-            title: `${this.#getTitle()}`,
-            icon: 'imgs/actions/hue/icon',
+            title: 'GM',
+            icon: 'imgs/actions/gm/icon',
             indicator: {
-                value: settings.hue,
-                bar_bg_c:
-                    '0:#ff0000,0.1667:#ffff00,0.3333:#00ff00,0.5000:#00ffff,0.6667:#0000ff,0.8333:#ff00ff,1.0:#ff0000',
+                value: indicatorValue,
+                bar_bg_c: '0:#00ff00,0.5:#888888,1:#ff00ff',
             },
-            value: settings.hue + '',
+            value: displayValue,
         });
     }
 
-    override onDialUp(ev: DialUpEvent<DialSettings>): Promise<void> | void {
+    override onDialUp(ev: DialUpEvent<GMSettings>): Promise<void> | void {
         streamDeck.logger.info('onDialUp:', ev.payload.settings);
         let settings = ev.payload.settings;
         if (settings.selectedLights.length <= 0) {
             streamDeck.logger.warn('No lights selected to toggle.');
             ev.action.setFeedback({
-                title: `${this.#getTitle()} ⚠️`,
-                icon: 'imgs/actions/hue/icon',
+                title: 'GM \u26a0\ufe0f',
+                icon: 'imgs/actions/gm/icon',
             });
             return;
         }
@@ -79,8 +83,8 @@ export class HUEControl extends SingletonAction<DialSettings> {
                     streamDeck.logger.info('Lights toggled successfully:', response.body.switched);
                     ev.action.setSettings(settings);
                     ev.action.setFeedback({
-                        title: `${this.#getTitle()}`,
-                        icon: 'imgs/actions/hue/icon',
+                        title: 'GM',
+                        icon: 'imgs/actions/gm/icon',
                     });
                 } else {
                     streamDeck.logger.warn('Failed to toggle lights:', response.body);
@@ -91,56 +95,42 @@ export class HUEControl extends SingletonAction<DialSettings> {
             });
     }
 
-    /**
-     * Update the value based on the dial rotation.
-     */
-    override onDialRotate(ev: DialRotateEvent<DialSettings>): Promise<void> | void {
+    override onDialRotate(ev: DialRotateEvent<GMSettings>): Promise<void> | void {
         let settings = ev.payload.settings;
         const { ticks } = ev.payload;
         if (ev.payload.settings.selectedLights == undefined || ev.payload.settings.selectedLights.length <= 0) {
-            streamDeck.logger.warn('No lights selected to adjust temperature.');
+            streamDeck.logger.warn('No lights selected to adjust GM.');
             ev.action.setFeedback({
-                title: `${this.#getTitle()} ⚠️`,
-                icon: 'imgs/actions/hue/icon',
+                title: 'GM \u26a0\ufe0f',
+                icon: 'imgs/actions/gm/icon',
             });
             return;
         }
 
-        settings.hue = Math.max(0, Math.min(360, settings.hue + ticks * 5));
-        streamDeck.logger.warn('settings:', settings);
-        setLightsHUE(ev.payload.settings.selectedLights, settings.hue)
+        settings.gmm = Math.max(-50, Math.min(50, settings.gmm + ticks * 1));
+        setLightsGM(ev.payload.settings.selectedLights, settings.gmm)
             .then((response) => {
                 if (response.body && response.body.success) {
-                    streamDeck.logger.info('HUE set successfully:', response.body.switched);
+                    streamDeck.logger.info('GM set successfully:', response.body.switched);
                     this.syncSettings2UI(ev.action, settings);
                 } else {
-                    streamDeck.logger.warn('Failed to set HUE:', response.body);
+                    streamDeck.logger.warn('Failed to set GM:', response.body);
                 }
             })
             .catch((err) => {
-                streamDeck.logger.error('setLightsHUE failed:', err);
+                streamDeck.logger.error('setLightsGM failed:', err);
             });
     }
 
-    /**
-     * Listen for messages from the property inspector.
-     * @param ev Event information.
-     */
-    override async onSendToPlugin(ev: SendToPluginEvent<JsonValue, DialSettings>): Promise<void> {
+    override async onSendToPlugin(ev: SendToPluginEvent<JsonValue, GMSettings>): Promise<void> {
         streamDeck.logger.debug('Received message from property inspector:', ev);
-        // Check if the payload is requesting a data source, i.e. the structure is { event: string }
         if (ev.payload instanceof Object && 'event' in ev.payload && ev.payload.event === 'deviceList') {
             let { lights = [] } = await streamDeck.settings.getGlobalSettings<GlobalSettings>();
-            let ui_lights = [];
-            for (const light of lights) {
-                if (light.supportRGB) {
-                    ui_lights.push({
-                        label: light.name,
-                        value: light.id,
-                        disabled: light.state == -1,
-                    });
-                }
-            }
+            let ui_lights = lights.map((light) => ({
+                label: light.name,
+                value: light.id,
+                disabled: light.state == -1,
+            }));
             streamDeck.logger.debug('Sending device list to property inspector:', ui_lights);
             streamDeck.ui.current?.sendToPropertyInspector({
                 event: 'deviceList',
@@ -150,13 +140,8 @@ export class HUEControl extends SingletonAction<DialSettings> {
     }
 }
 
-/**
- * Settings for {@link IncrementCounter}.
- */
-type DialSettings = {
+type GMSettings = {
     light_state: boolean;
-    value: number;
-    light: number;
-    hue: number;
+    gmm: number;
     selectedLights: string[];
 };

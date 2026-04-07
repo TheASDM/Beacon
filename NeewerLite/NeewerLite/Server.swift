@@ -45,22 +45,41 @@ final class NeewerLiteServer {
             return nil
         }
         
-        // GET /listLights → returns dummy lights array
+        // GET /listLights → returns lights array with full state
         server.GET["/listLights"] = { _ in
             var lights: [[String: Any]] = []
             self.appDelegate?.viewObjects.forEach {
-                let name = $0.device.userLightName.value.isEmpty ? $0.device.rawName : $0.device.userLightName.value
-                let cct = "\($0.device.CCTRange().minCCT)-\($0.device.CCTRange().maxCCT)"
-                var item = ["id": "\($0.device.identifier)", "name": name, "cctRange": "\(cct)"]
-                item["brightness"] = "\($0.device.brrValue.value)"
-                item["temperature"] = "\($0.device.cctValue.value)"
-                item["supportRGB"] = "\($0.device.supportRGB ? 1 : 0)"
-                item["maxChannel"] = "\($0.device.maxChannel)"
+                let dev = $0.device
+                let name = dev.userLightName.value.isEmpty ? dev.rawName : dev.userLightName.value
+                let cct = "\(dev.CCTRange().minCCT)-\(dev.CCTRange().maxCCT)"
+                var item = ["id": "\(dev.identifier)", "name": name, "cctRange": "\(cct)"]
+                item["brightness"] = "\(dev.brrValue.value)"
+                item["temperature"] = "\(dev.cctValue.value)"
+                item["gmm"] = "\(dev.gmmValue.value)"
+                item["hue"] = "\(dev.hueValue.value)"
+                item["sat"] = "\(dev.satValue.value)"
+                item["supportRGB"] = "\(dev.supportRGB ? 1 : 0)"
+                item["maxChannel"] = "\(dev.maxChannel)"
+                item["supportGM"] = "\(dev.supportCCTGM ? 1 : 0)"
+                // Current mode
+                switch dev.lightMode {
+                case .CCTMode: item["mode"] = "cct"
+                case .HSIMode: item["mode"] = "hsi"
+                case .SCEMode: item["mode"] = "sce"
+                case .SRCMode: item["mode"] = "src"
+                }
+                // Current FX/source info
+                item["fxId"] = "\(dev.channel.value)"
+                if let currentFx = dev.supportedFX.first(where: { $0.id == dev.channel.value }) {
+                    item["fxName"] = currentFx.name
+                }
+                item["fxCount"] = "\(dev.supportedFX.count)"
+                item["sourceCount"] = "\(dev.supportedSource.count)"
                 if !$0.deviceConnected
                 {
                     item["state"] = "-1"
                 }
-                else if $0.device.isOn.value
+                else if dev.isOn.value
                 {
                     item["state"] = "1"
                 }
@@ -71,7 +90,6 @@ final class NeewerLiteServer {
                 lights.append(item)
             }
             let payload: [String: Any] = ["lights": lights]
-            // Logger.debug(LogTag.server, "Received /listLights payload: \(payload)")
             return HttpResponse.ok(.json(payload))
         }
 
@@ -331,7 +349,7 @@ final class NeewerLiteServer {
                             }
                         }
                         else if viewObj.device.maxChannel == 17 {
-                            if payload.fx9 > 0 && payload.fx17 <= viewObj.device.maxChannel {
+                            if payload.fx17 > 0 && payload.fx17 <= viewObj.device.maxChannel {
                                 Task { @MainActor in
                                     viewObj.changeToSCEMode()
                                     viewObj.changeToSCE(payload.fx17, CGFloat(viewObj.device.brrValue.value))
@@ -344,6 +362,190 @@ final class NeewerLiteServer {
             return HttpResponse.ok(.json(["success": true, "switched": payload.lights]))
         }
         
+        // POST /gm → set green-magenta value
+        server.POST["/gm"] = { request in
+            let data = Data(request.body)
+            struct GMPayload: Codable {
+                let lights: [String]
+                let gmm: CGFloat  // -50 to +50
+            }
+            let payload: GMPayload
+            do {
+                payload = try JSONDecoder().decode(GMPayload.self, from: data)
+            } catch {
+                Logger.error(LogTag.server, "/gm: invalid JSON - \(error)")
+                return HttpResponse.badRequest(.json(["error": "invalid JSON"]))
+            }
+            for light in payload.lights {
+                self.appDelegate?.viewObjects
+                    .filter { $0.matches(lightId: light) }
+                    .forEach { viewObj in
+                        Task { @MainActor in
+                            viewObj.device.setCCTLightValues(
+                                brr: CGFloat(viewObj.device.brrValue.value),
+                                cct: CGFloat(viewObj.device.cctValue.value),
+                                gmm: CGFloat(payload.gmm))
+                        }
+                    }
+            }
+            return HttpResponse.ok(.json(["success": true, "switched": payload.lights]))
+        }
+
+        // POST /mode → switch light mode
+        server.POST["/mode"] = { request in
+            let data = Data(request.body)
+            struct ModePayload: Codable {
+                let lights: [String]
+                let mode: String  // "cct", "hsi", "sce"
+            }
+            let payload: ModePayload
+            do {
+                payload = try JSONDecoder().decode(ModePayload.self, from: data)
+            } catch {
+                Logger.error(LogTag.server, "/mode: invalid JSON - \(error)")
+                return HttpResponse.badRequest(.json(["error": "invalid JSON"]))
+            }
+            for light in payload.lights {
+                self.appDelegate?.viewObjects
+                    .filter { $0.matches(lightId: light) }
+                    .forEach { viewObj in
+                        Task { @MainActor in
+                            switch payload.mode {
+                            case "cct":
+                                viewObj.changeToCCTMode()
+                            case "hsi":
+                                viewObj.changeToHSIMode()
+                            case "sce":
+                                viewObj.changeToSCEMode()
+                            default:
+                                Logger.error(LogTag.server, "/mode: unknown mode \(payload.mode)")
+                            }
+                        }
+                    }
+            }
+            return HttpResponse.ok(.json(["success": true, "switched": payload.lights, "mode": payload.mode]))
+        }
+
+        // POST /fxnext → cycle to next/prev FX effect
+        server.POST["/fxnext"] = { request in
+            let data = Data(request.body)
+            struct FXNextPayload: Codable {
+                let lights: [String]
+                let direction: Int  // 1 = next, -1 = prev
+            }
+            let payload: FXNextPayload
+            do {
+                payload = try JSONDecoder().decode(FXNextPayload.self, from: data)
+            } catch {
+                Logger.error(LogTag.server, "/fxnext: invalid JSON - \(error)")
+                return HttpResponse.badRequest(.json(["error": "invalid JSON"]))
+            }
+            var resultFxId: Int = 0
+            var resultFxName: String = ""
+            for light in payload.lights {
+                self.appDelegate?.viewObjects
+                    .filter { $0.matches(lightId: light) }
+                    .forEach { viewObj in
+                        let dev = viewObj.device
+                        let fxs = dev.supportedFX
+                        guard !fxs.isEmpty else { return }
+                        let currentId = Int(dev.channel.value)
+                        let currentIdx = fxs.firstIndex(where: { $0.id == currentId }) ?? 0
+                        var nextIdx = currentIdx + payload.direction
+                        if nextIdx >= fxs.count { nextIdx = 0 }
+                        if nextIdx < 0 { nextIdx = fxs.count - 1 }
+                        let nextFx = fxs[nextIdx]
+                        resultFxId = Int(nextFx.id)
+                        resultFxName = nextFx.name
+                        Task { @MainActor in
+                            viewObj.changeToSCEMode()
+                            dev.sendSceneCommand(nextFx)
+                        }
+                    }
+            }
+            return HttpResponse.ok(.json([
+                "success": true, "switched": payload.lights,
+                "fxId": resultFxId, "fxName": resultFxName
+            ] as [String: Any]))
+        }
+
+        // POST /fxspeed → adjust FX speed and resend
+        server.POST["/fxspeed"] = { request in
+            let data = Data(request.body)
+            struct FXSpeedPayload: Codable {
+                let lights: [String]
+                let speed: Int  // 1-10
+            }
+            let payload: FXSpeedPayload
+            do {
+                payload = try JSONDecoder().decode(FXSpeedPayload.self, from: data)
+            } catch {
+                Logger.error(LogTag.server, "/fxspeed: invalid JSON - \(error)")
+                return HttpResponse.badRequest(.json(["error": "invalid JSON"]))
+            }
+            for light in payload.lights {
+                self.appDelegate?.viewObjects
+                    .filter { $0.matches(lightId: light) }
+                    .forEach { viewObj in
+                        let dev = viewObj.device
+                        let currentId = Int(dev.channel.value)
+                        if let currentFx = dev.supportedFX.first(where: { $0.id == currentId }) {
+                            currentFx.featureValues["speed"] = CGFloat(payload.speed)
+                            Task { @MainActor in
+                                dev.sendSceneCommand(currentFx)
+                            }
+                        }
+                    }
+            }
+            return HttpResponse.ok(.json(["success": true, "switched": payload.lights]))
+        }
+
+        // POST /source → cycle through light sources
+        server.POST["/source"] = { request in
+            let data = Data(request.body)
+            struct SourcePayload: Codable {
+                let lights: [String]
+                let direction: Int  // 1 = next, -1 = prev
+            }
+            let payload: SourcePayload
+            do {
+                payload = try JSONDecoder().decode(SourcePayload.self, from: data)
+            } catch {
+                Logger.error(LogTag.server, "/source: invalid JSON - \(error)")
+                return HttpResponse.badRequest(.json(["error": "invalid JSON"]))
+            }
+            var resultSourceId: Int = 0
+            var resultSourceName: String = ""
+            for light in payload.lights {
+                self.appDelegate?.viewObjects
+                    .filter { $0.matches(lightId: light) }
+                    .forEach { viewObj in
+                        let dev = viewObj.device
+                        let sources = dev.supportedSource
+                        guard !sources.isEmpty else { return }
+                        let currentId = Int(dev.channel.value)
+                        let currentIdx = sources.firstIndex(where: { $0.id == currentId }) ?? 0
+                        var nextIdx = currentIdx + payload.direction
+                        if nextIdx >= sources.count { nextIdx = 0 }
+                        if nextIdx < 0 { nextIdx = sources.count - 1 }
+                        let nextSource = sources[nextIdx]
+                        resultSourceId = Int(nextSource.id)
+                        resultSourceName = nextSource.name
+                        if let defaultCmd = nextSource.defaultCmdPattern {
+                            Task { @MainActor in
+                                dev.lightMode = .SRCMode
+                                dev.channel.value = UInt8(nextSource.id)
+                                dev.sendCommandPattern(defaultCmd)
+                            }
+                        }
+                    }
+            }
+            return HttpResponse.ok(.json([
+                "success": true, "switched": payload.lights,
+                "sourceId": resultSourceId, "sourceName": resultSourceName
+            ] as [String: Any]))
+        }
+
         // Fallback for other routes
         server.notFoundHandler = { request in
             Logger.info(LogTag.server, "return notFound for \(request.path)")

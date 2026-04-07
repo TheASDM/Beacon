@@ -121,6 +121,44 @@ export function setLightsHST(
     >('/hst', { lights: lights, brightness: brightness, saturation: saturation, hex_color: hex_color });
 }
 
+interface FXNextResponse {
+    success: boolean;
+    switched: string[];
+    fxId: number;
+    fxName: string;
+}
+
+interface SourceResponse {
+    success: boolean;
+    switched: string[];
+    sourceId: number;
+    sourceName: string;
+}
+
+export function setLightsGM(lights: string[], gmm: number): Promise<HttpResponse<SwitchResponse>> {
+    gmm = Number(gmm);
+    return httpPostJson<{ lights: string[]; gmm: number }, SwitchResponse>('/gm', { lights, gmm });
+}
+
+export function setLightsMode(lights: string[], mode: string): Promise<HttpResponse<SwitchResponse>> {
+    return httpPostJson<{ lights: string[]; mode: string }, SwitchResponse>('/mode', { lights, mode });
+}
+
+export function cycleFX(lights: string[], direction: number): Promise<HttpResponse<FXNextResponse>> {
+    direction = Number(direction);
+    return httpPostJson<{ lights: string[]; direction: number }, FXNextResponse>('/fxnext', { lights, direction });
+}
+
+export function setFXSpeed(lights: string[], speed: number): Promise<HttpResponse<SwitchResponse>> {
+    speed = Number(speed);
+    return httpPostJson<{ lights: string[]; speed: number }, SwitchResponse>('/fxspeed', { lights, speed });
+}
+
+export function cycleSource(lights: string[], direction: number): Promise<HttpResponse<SourceResponse>> {
+    direction = Number(direction);
+    return httpPostJson<{ lights: string[]; direction: number }, SourceResponse>('/source', { lights, direction });
+}
+
 function heartbeat(): void {
     fetchListLights()
         .then((response) => {
@@ -131,9 +169,17 @@ function heartbeat(): void {
                     cctRange: light.cctRange,
                     brightness: Number(light.brightness),
                     temperature: Number(light.temperature),
+                    gmm: Number(light.gmm || 0),
+                    hue: Number(light.hue || 0),
+                    sat: Number(light.sat || 0),
                     supportRGB: Number(light.supportRGB),
+                    supportGM: Number(light.supportGM || 0),
                     maxChannel: Number(light.maxChannel),
                     state: Number(light.state),
+                    mode: String(light.mode || 'cct'),
+                    fxName: String(light.fxName || ''),
+                    fxCount: Number(light.fxCount || 0),
+                    sourceCount: Number(light.sourceCount || 0),
                 }));
                 // streamDeck.logger.info("Heartbeat: Found lights:", lights);
                 streamDeck.settings.setGlobalSettings<GlobalSettings>({
@@ -158,5 +204,5 @@ function heartbeat(): void {
 }
 
 export function startHeartbeat() {
-    setInterval(heartbeat, 1000);
+    setInterval(heartbeat, 3000);
 }

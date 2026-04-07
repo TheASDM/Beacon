@@ -5,10 +5,18 @@ export type Light = {
     name: string;
     brightness: number;
     temperature: number;
+    gmm: number;
+    hue: number;
+    sat: number;
     supportRGB: number;
+    supportGM: number;
     maxChannel: number;
     cctRange: string;
     state: number; // -1 offline, 0 off, 1 on
+    mode: string;
+    fxName: string;
+    fxCount: number;
+    sourceCount: number;
 };
 
 export type DataSourcePayload = {

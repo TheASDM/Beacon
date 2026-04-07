@@ -200,6 +200,114 @@
 				}
 			],
 			"PropertyInspectorPath": "ui/sat.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.gm",
+			"Name": "GM",
+			"Tooltip": "Control green-magenta tint",
+			"Icon": "imgs/actions/cct/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "$B2"
+			},
+			"States": [
+				{
+					"Image": "imgs/actions/cct/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/gm.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.mode.cct",
+			"Name": "CCT Mode",
+			"Tooltip": "Switch to CCT mode",
+			"Icon": "imgs/actions/cct/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/cct/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/mode.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.mode.hsi",
+			"Name": "HSI Mode",
+			"Tooltip": "Switch to HSI color mode",
+			"Icon": "imgs/actions/hue/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/hue/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/mode.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.fx.cycle",
+			"Name": "FX Cycle",
+			"Tooltip": "Cycle through FX effects",
+			"Icon": "imgs/actions/fx/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/fx/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/fx_cycle.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.source.cycle",
+			"Name": "Source Cycle",
+			"Tooltip": "Cycle through light sources",
+			"Icon": "imgs/actions/temperature/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/temperature/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/source_cycle.html"
+		},
+		{
+			"UUID": "com.beyondcow.neewerlite.lightcontrol.fx.speed",
+			"Name": "FX Speed",
+			"Tooltip": "Control FX effect speed",
+			"Icon": "imgs/actions/fx/icon",
+			"SupportedInMultiActions": false,
+			"Controllers": [
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "$B1"
+			},
+			"States": [
+				{
+					"Image": "imgs/actions/fx/icon",
+					"TitleAlignment": "middle"
+				}
+			],
+			"PropertyInspectorPath": "ui/fx_speed.html"
 		}
 	],
 	"Software": {
