@@ -53,6 +53,14 @@
 		A7B482292DFD3D6100EB4450 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7B482282DFD3D5400EB4450 /* Server.swift */; };
 		A7EE61BD2B03680B00E85502 /* MySplitViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7EE61BC2B03680B00E85502 /* MySplitViewDelegate.swift */; };
 		A7FF36712AF84A690068022C /* CodableValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FF36702AF84A690068022C /* CodableValue.swift */; };
+		A7AA000200000000AABB0001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0001 /* AppState.swift */; };
+		A7AA000200000000AABB0002 /* CCTModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0002 /* CCTModeView.swift */; };
+		A7AA000200000000AABB0003 /* FXModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0003 /* FXModeView.swift */; };
+		A7AA000200000000AABB0004 /* HSIModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0004 /* HSIModeView.swift */; };
+		A7AA000200000000AABB0005 /* LightCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0005 /* LightCardView.swift */; };
+		A7AA000200000000AABB0006 /* LightViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0006 /* LightViewModel.swift */; };
+		A7AA000200000000AABB0007 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0007 /* MainView.swift */; };
+		A7AA000200000000AABB0008 /* SourceModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7AA000100000000AABB0008 /* SourceModeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +121,14 @@
 		A7B482282DFD3D5400EB4450 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		A7EE61BC2B03680B00E85502 /* MySplitViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MySplitViewDelegate.swift; sourceTree = "<group>"; };
 		A7FF36702AF84A690068022C /* CodableValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableValue.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0001 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0002 /* CCTModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CCTModeView.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0003 /* FXModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FXModeView.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0004 /* HSIModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HSIModeView.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0005 /* LightCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightCardView.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0006 /* LightViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightViewModel.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0007 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		A7AA000100000000AABB0008 /* SourceModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceModeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +184,7 @@
 				A731DD8A25A5925500302E25 /* Model */,
 				A731DD7F25A5921F00302E25 /* Views */,
 				A731DDA525A5A04000302E25 /* ViewModels */,
+				A7AA000300000000AABB0001 /* SwiftUI */,
 				A731DDAC25A5A13000302E25 /* Resources */,
 				A733AEC12933185900F37DDD /* AppDelegate.swift */,
 				A7B482282DFD3D5400EB4450 /* Server.swift */,
@@ -270,6 +287,21 @@
 				A76C4B6C275474FA00D2F145 /* AudioSpectrogram.swift */,
 			);
 			path = Spectrogram;
+			sourceTree = "<group>";
+		};
+		A7AA000300000000AABB0001 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				A7AA000100000000AABB0001 /* AppState.swift */,
+				A7AA000100000000AABB0002 /* CCTModeView.swift */,
+				A7AA000100000000AABB0003 /* FXModeView.swift */,
+				A7AA000100000000AABB0004 /* HSIModeView.swift */,
+				A7AA000100000000AABB0005 /* LightCardView.swift */,
+				A7AA000100000000AABB0006 /* LightViewModel.swift */,
+				A7AA000100000000AABB0007 /* MainView.swift */,
+				A7AA000100000000AABB0008 /* SourceModeView.swift */,
+			);
+			path = SwiftUI;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -439,6 +471,14 @@
 				A749F71525B3DE9B0066EB06 /* ColorWheel.swift in Sources */,
 				A76C4B6D275474FA00D2F145 /* AudioSpectrogram.swift in Sources */,
 				A753109D2AFC996F009F533C /* StorageManager.swift in Sources */,
+				A7AA000200000000AABB0001 /* AppState.swift in Sources */,
+				A7AA000200000000AABB0002 /* CCTModeView.swift in Sources */,
+				A7AA000200000000AABB0003 /* FXModeView.swift in Sources */,
+				A7AA000200000000AABB0004 /* HSIModeView.swift in Sources */,
+				A7AA000200000000AABB0005 /* LightCardView.swift in Sources */,
+				A7AA000200000000AABB0006 /* LightViewModel.swift in Sources */,
+				A7AA000200000000AABB0007 /* MainView.swift in Sources */,
+				A7AA000200000000AABB0008 /* SourceModeView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -528,7 +568,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -588,7 +628,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;

@@ -302,6 +302,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             for cfg in cfgs {
                 let dev = NeewerLight(cfg)
                 viewObjects.append(DeviceViewObject(dev))
+                AppState.shared.addLight(dev)
             }
             return
         }
@@ -316,6 +317,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
                     Logger.debug("\(cfg)")
                     let dev = NeewerLight(cfg)
                     viewObjects.append(DeviceViewObject(dev))
+                    AppState.shared.addLight(dev)
                 }
             } catch {
                 Logger.error("Load Lights Error encoding JSON: \(error)")
@@ -697,8 +699,30 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
     @IBAction func showWindowAction(_ sender: AnyObject) {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        self.window.makeKeyAndOrderFront(nil)
-        self.window.orderFrontRegardless()
+        showSwiftUIWindow()
+    }
+
+    private var swiftUIWindow: NSWindow?
+
+    func showSwiftUIWindow() {
+        if let existing = swiftUIWindow {
+            existing.makeKeyAndOrderFront(nil)
+            return
+        }
+        let mainView = MainView(appState: AppState.shared)
+        let hostingView = NSHostingView(rootView: mainView)
+        let win = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        win.title = "NeewerLite"
+        win.contentView = hostingView
+        win.center()
+        win.makeKeyAndOrderFront(nil)
+        win.isReleasedWhenClosed = false
+        swiftUIWindow = win
     }
 
     @IBAction func switchViewAction(_ sender: NSSegmentedControl) {
@@ -1265,6 +1289,7 @@ extension AppDelegate: NSTableViewDataSource, NSTableViewDelegate {
             let viewObj = scanningViewObjects.remove(at: rowIndex)
             Logger.info(LogTag.click, "connect a new light \(viewObj.device.getConfig())")
             viewObjects.append(viewObj)
+            AppState.shared.addLight(viewObj.device)
             self.updateUI()
             self.saveLightsToDisk()
         }
