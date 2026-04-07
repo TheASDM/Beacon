@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 1/5/21.
 //
@@ -76,7 +76,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
         }
     }
     var scanningTimer: Timer?
-    var server: NeewerLiteServer?
+    var server: BeaconServer?
     var launching: Bool = true
     var commonJobTimer: Timer?
 
@@ -151,7 +151,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
         self.switchViewAction(self.viewsButton)
 
-        server = NeewerLiteServer(appDelegate: self)
+        server = BeaconServer(appDelegate: self)
         server!.start()
         commonJobTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) {
             [weak self] _ in
@@ -707,21 +707,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
 
     private var swiftUIWindow: NSWindow?
 
+    private var swiftUIHostingController: NSHostingController<MainView>?
+
     func showSwiftUIWindow() {
         if let existing = swiftUIWindow {
             existing.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
             return
         }
         let mainView = MainView(appState: AppState.shared)
-        let hostingView = NSHostingView(rootView: mainView)
-        let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable],
-            backing: .buffered,
-            defer: false
-        )
-        win.title = "NeewerLite"
-        win.contentView = hostingView
+        let controller = NSHostingController(rootView: mainView)
+        swiftUIHostingController = controller
+
+        let win = NSWindow(contentViewController: controller)
+        win.title = "Beacon"
+        win.setContentSize(NSSize(width: 600, height: 500))
+        win.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         win.center()
         win.delegate = self
         win.makeKeyAndOrderFront(nil)
@@ -744,22 +745,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDele
             if let selectedView = views[sender.selectedSegment] {
                 self.audioSpectrogramViewVisible = false
                 if selectedView == self.view0 {
-                    window.title = "NeewerLite - Scan View"
+                    window.title = "Beacon - Scan View"
                     if !launching {
                         Logger.info(LogTag.click, "Scan View")
                     }
                 } else if selectedView == self.view1 {
-                    window.title = "NeewerLite - Control View"
+                    window.title = "Beacon - Control View"
                     if !launching {
                         Logger.info(LogTag.click, "Control View")
                     }
                 } else if selectedView == self.view2 {
-                    window.title = "NeewerLite - Music View"
+                    window.title = "Beacon - Music View"
                     if !launching {
                         Logger.info(LogTag.click, "Music View")
                     }
                 } else if selectedView == self.view3 {
-                    window.title = "NeewerLite - Screen View"
+                    window.title = "Beacon - Screen View"
                     if !launching {
                         Logger.info(LogTag.click, "Screen View")
                     }

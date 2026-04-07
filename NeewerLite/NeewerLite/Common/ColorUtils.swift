@@ -1,6 +1,6 @@
 //
 //  ColorUtils.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 1/16/21.
 //

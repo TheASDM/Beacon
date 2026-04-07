@@ -9,7 +9,7 @@ struct MainView: View {
         VStack(spacing: 0) {
             // Header bar
             HStack {
-                Text("NeewerLite")
+                Text("Beacon")
                     .font(.title2)
                     .fontWeight(.semibold)
 

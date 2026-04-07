@@ -13,7 +13,7 @@ extension DeviceViewObject {
     }
 }
 
-final class NeewerLiteServer {
+final class BeaconServer {
     private let server = HttpServer()
     private let port: in_port_t
     private let appDelegate: AppDelegate?
@@ -564,7 +564,7 @@ final class NeewerLiteServer {
     func start() {
         do {
             try server.start(self.port, forceIPv4: true)
-            Logger.info(LogTag.server, "NeewerLiteServer listening on http://127.0.0.1:\(port)")
+            Logger.info(LogTag.server, "BeaconServer listening on http://127.0.0.1:\(port)")
         } catch {
             Logger.error(LogTag.server, "Failed to start server: \(error)")
         }
@@ -573,6 +573,6 @@ final class NeewerLiteServer {
     /// Stops the HTTP server
     func stop() {
         server.stop()
-        Logger.info(LogTag.server, "NeewerLiteServer stopped")
+        Logger.info(LogTag.server, "BeaconServer stopped")
     }
 }

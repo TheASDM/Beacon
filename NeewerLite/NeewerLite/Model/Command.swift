@@ -1,6 +1,6 @@
 //
 //  Command.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 2/18/23.
 //

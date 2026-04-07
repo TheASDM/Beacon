@@ -1,6 +1,6 @@
 //
 //  NeewerLightConstant.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 10/23/23.
 //

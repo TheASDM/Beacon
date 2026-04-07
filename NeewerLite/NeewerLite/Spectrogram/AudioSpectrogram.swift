@@ -1,6 +1,6 @@
 //
 //  AudioSpectrogram.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 11/28/21.
 //

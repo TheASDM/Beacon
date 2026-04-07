@@ -1,6 +1,6 @@
 //
 //  DataExtensions.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 06/16/25.
 //

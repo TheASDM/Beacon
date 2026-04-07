@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-  <string>1.6.10</string>
+  <string>2.0.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -58,19 +58,16 @@
 		</dict>
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>Use Bluetooth to control Neewer LED light</string>
+	<string>Beacon uses Bluetooth to control your Neewer LED lights</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Conver Audio to LED light color</string>
+	<string>Convert audio to LED light color</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>SDPluginVersion</key>
 	<string>0.1.3.0</string>
-	<key>SUFeedURL</key>
-	<string>https://beyondcow.com/neewerlite/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>alhbxGGFpHXtfz+awtP9zxxYb29sl+p9DC7rTJK1OL8=</string>
+	<!-- Sparkle auto-update removed - this is a fork -->
 	<key>UIAppFonts</key>
 	<array>
 		<string>digital-7-mono.ttf</string>

@@ -1,6 +1,6 @@
 //
 //  NeewerDevice.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 1/5/21.
 //
@@ -483,9 +483,10 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
     }
     
     private func sendPowerRequest(turnOn: Bool, altCommand: Bool = false) {
-        Logger.debug("send power \(turnOn ? "On" : "Off")")
+        Logger.debug("[\(rawName)] send power \(turnOn ? "On" : "Off")")
         isOn.value = turnOn
         guard let characteristic = deviceCtlCharacteristic else {
+            Logger.warn("[\(rawName)] sendPowerRequest FAILED: no deviceCtlCharacteristic")
             return
         }
 
@@ -593,7 +594,10 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         }
 
         // Fallback to legacy logic
-        if supportGMRange.value {
+        if supportNewPowerCommand {
+            // MAC-embedded command format for newer lights (RGB1200 III, BH-30S, etc.)
+            cmd = getNewCCTLightCommand(mac: _macAddress ?? "", brightness: brr, cct: cct, gmm: gmm)
+        } else if supportGMRange.value {
             cmd = getCCTDATALightCommand(brightness: brr, correlatedColorTemperature: cct, gmm: gmm)
         } else if supportRGB {
             cmd = getCCTLightCommand(brightness: brr, correlatedColorTemperature: cct)
@@ -701,39 +705,40 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
             if let matchingFx = supportedFX.first(where: { $0.id == fxx.id }) {
                 if let cmdPattern = matchingFx.cmdPattern {
                     // Compose values for the pattern
+                    // Use matchingFx for needXXX flags (it has the parsed pattern flags)
+                    // but fxx for actual values (it has the user-set feature values)
                     var values: [String: Any] = [:]
-                    if fxx.needSpeed {
+                    if matchingFx.needSpeed {
                         values["speed"] = fxx.speedValue
                     }
-                    if fxx.needColor {
+                    if matchingFx.needColor {
                         values["color"] = fxx.colorValue
                     }
-                    if fxx.needBRR {
+                    if matchingFx.needBRR {
                         values["brr"] = fxx.brrValue
                     }
-                    if fxx.needBRRUpperBound {
+                    if matchingFx.needBRRUpperBound {
                         values["brr2"] = fxx.brrUpperValue
                     }
-                    if fxx.needCCT {
+                    if matchingFx.needCCT {
                         values["cct"] = fxx.cctValue
-                        Logger.debug("cct: \(fxx.cctValue)")
                     }
-                    if fxx.needCCTUpperBound {
+                    if matchingFx.needCCTUpperBound {
                         values["cct2"] = fxx.cctUpperValue
                     }
-                    if fxx.needGM {
+                    if matchingFx.needGM {
                         values["gm"] = fxx.gmValue + 50
                     }
-                    if fxx.needSAT {
+                    if matchingFx.needSAT {
                         values["sat"] = fxx.satValue
                     }
-                    if fxx.needHUE {
+                    if matchingFx.needHUE {
                         values["hue"] = fxx.hueValue
                     }
-                    if fxx.needHUEUpperBound {
+                    if matchingFx.needHUEUpperBound {
                         values["hue2"] = fxx.hueUpperValue
                     }
-                    if fxx.needSparks {
+                    if matchingFx.needSparks {
                         values["sparks"] = fxx.sparksValue
                     }
                     let data = CommandPatternParser.buildCommand(from: cmdPattern, values: values)
@@ -787,7 +792,7 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
                 channel.value = UInt8(data[3]+1).clamped(to: 1...30)
             }
         } else {
-            Logger.info("handleNotifyValueUpdate \(data.hexEncodedString())")
+            Logger.info("[\(rawName)] notify \(data.hexEncodedString())")
         }
     }
 
@@ -860,6 +865,18 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         return appendCheckSum(bArr)
     }
 
+    private func getNewCCTLightCommand(mac: String, brightness brr: CGFloat, cct: CGFloat, gmm: CGFloat) -> Data {
+        let newBrrValue = Int(brr).clamped(to: 0...100)
+        let cctRange = CCTRange()
+        let newCctValue = Int(cct).clamped(to: cctRange.minCCT...cctRange.maxCCT)
+        let newGmValue = Int(gmm).clamped(to: -50...50) + 50  // convert -50..50 to 0..100
+        let bArr1: [UInt8] = composeSingleCommandWithMac(
+            NeewerLightConstant.BleCommand.powerNewTag, mac,
+            NeewerLightConstant.BleCommand.setCCTLightTag,
+            [newBrrValue, newCctValue, newGmValue, 0x00, 0x00])
+        return Data(bArr1)
+    }
+
     func getNewPowerCommand(_ turnOn: Bool) -> Data {
         /*
          Apr 28 12:12:17.298  ATT Send Write Request - Handle:0x000E - Value: 788D 08F7 AC16 F158 9681 0127  SEND
@@ -869,7 +886,13 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
          CMD  TAG  SIZE       MAC                     SUB_TAG  PowerOff    (checksum)
          78   8D   08         (F7 AC 16 F1 58 96)     81       02          28
          */
-        guard let mac = _macAddress else { return Data() }
+        var mac = _macAddress ?? ""
+        // Temporary: if MAC is empty and this is the RGB1200(III), use known MAC for testing
+        if mac.isEmpty && rawName.contains("20240014") {
+            mac = "C8:A0:6A:21:42:81"
+            _macAddress = mac
+            print("!!! Using hardcoded MAC for RGB1200: \(mac)")
+        }
         let bArr1: [UInt8] = composeSingleCommandWithMac(NeewerLightConstant.BleCommand.powerNewTag, mac,
                                                          NeewerLightConstant.BleCommand.powerNewSubTag,
                                                          turnOn ? NeewerLightConstant.BleCommand.powerNewOnSubTag : NeewerLightConstant.BleCommand.powerNewOffSubTag)
@@ -1294,6 +1317,7 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
 
     private func write(data value: Data, to characteristic: CBCharacteristic) {
         guard let peripheral = self.peripheral else {
+            Logger.warn("[\(rawName)] write FAILED: no peripheral")
             return
         }
         if value.count > 1 {
@@ -1303,7 +1327,7 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
             }
             _writeDispatcher?.cancel()
             let currentWorkItem = DispatchWorkItem {
-                Logger.debug("write data: \(value.hexEncodedString())")
+                Logger.debug("[\(self.rawName)] write \(value.count)B: \(value.hexEncodedString())")
                 if characteristic.properties.contains(CBCharacteristicProperties.writeWithoutResponse) {
                     peripheral.writeValue(value, for: characteristic, type: .withoutResponse)
                 } else if characteristic.properties.contains(CBCharacteristicProperties.write) {

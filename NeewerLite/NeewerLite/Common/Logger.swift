@@ -1,6 +1,6 @@
 //
 //  Logger.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 1/5/21.
 //
@@ -65,7 +65,7 @@ public class Logger {
     private static var networkDown: Bool = false
     private static var logFileURL: URL? {
         let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let logsDirectory = appSupportURL.appendingPathComponent("NeewerLite/Logs")
+        let logsDirectory = appSupportURL.appendingPathComponent("Beacon/Logs")
         try? FileManager.default.createDirectory(at: logsDirectory, withIntermediateDirectories: true)
         let filename = "neewerlite_log_\(Date().formattedLogFileDate()).log"
         return logsDirectory.appendingPathComponent(filename)
@@ -126,7 +126,7 @@ public class Logger {
         guard let logsDir = FileManager.default
                 .urls(for: .applicationSupportDirectory, in: .userDomainMask)
                 .first?
-                .appendingPathComponent("NeewerLite/Logs") else {
+                .appendingPathComponent("Beacon/Logs") else {
             return
         }
 

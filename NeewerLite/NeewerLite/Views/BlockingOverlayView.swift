@@ -1,6 +1,6 @@
 //
 //  BlockingOverlayView.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 10/25/23.
 //

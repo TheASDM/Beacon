@@ -1,6 +1,6 @@
 //
 //  ContentManager.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 11/10/23.
 //
@@ -120,7 +120,7 @@ class ContentManager {
     private lazy var cacheDirectory: URL = {
         let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
-        let cacheURL = appSupportURL.appendingPathComponent("NeewerLite/LightImageCache")
+        let cacheURL = appSupportURL.appendingPathComponent("Beacon/LightImageCache")
         if !fileManager.fileExists(atPath: cacheURL.path) {
             try? fileManager.createDirectory(
                 at: cacheURL, withIntermediateDirectories: true, attributes: nil)
@@ -134,7 +134,7 @@ class ContentManager {
     private var localDatabaseURL: URL {
         let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
-        let cacheURL = appSupportURL.appendingPathComponent("NeewerLite/database.json")
+        let cacheURL = appSupportURL.appendingPathComponent("Beacon/database.json")
         return cacheURL
     }
     private var ttlTimer: Timer?

@@ -1,6 +1,6 @@
 //
 //  StorageManager.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 11/8/23.
 //
@@ -18,7 +18,7 @@ class StorageManager {
             return nil
         }
         // Append your app's identifier to ensure uniqueness
-        appSupportDirectory = appSupportURL.appendingPathComponent(Bundle.main.bundleIdentifier ?? "NeewerLite")
+        appSupportDirectory = appSupportURL.appendingPathComponent(Bundle.main.bundleIdentifier ?? "Beacon")
         do {
             try fileManager.createDirectory(at: appSupportDirectory, withIntermediateDirectories: true, attributes: nil)
         } catch {

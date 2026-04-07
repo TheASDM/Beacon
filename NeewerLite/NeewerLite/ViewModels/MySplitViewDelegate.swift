@@ -1,6 +1,6 @@
 //
 //  MySplitViewDelegate.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 11/14/23.
 //

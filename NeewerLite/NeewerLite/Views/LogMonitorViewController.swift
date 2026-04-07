@@ -1,6 +1,6 @@
 //
 //  LogMonitorViewController.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 7/27/25.
 //
@@ -113,7 +113,7 @@ class LogMonitorViewController: NSViewController, NSWindowDelegate {
 
     private func setupUI() {
         // Title label
-        let titleLabel = NSTextField(labelWithString: "NeewerLite Log Monitor")
+        let titleLabel = NSTextField(labelWithString: "Beacon Log Monitor")
         titleLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(titleLabel)
@@ -646,7 +646,7 @@ class LogMonitorViewController: NSViewController, NSWindowDelegate {
                 defer: false
             )
 
-            logWindow?.title = "NeewerLite Log Monitor"
+            logWindow?.title = "Beacon Log Monitor"
             logWindow?.contentViewController = self
             logWindow?.center()
 

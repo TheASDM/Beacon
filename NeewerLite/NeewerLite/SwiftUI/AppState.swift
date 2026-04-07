@@ -1,6 +1,6 @@
 //
 //  AppState.swift
-//  NeewerLite
+//  Beacon
 //
 //  Top-level SwiftUI-facing container for the light collection.
 //  The actual BLE management stays in AppDelegate; this class is

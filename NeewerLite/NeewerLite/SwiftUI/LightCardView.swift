@@ -90,9 +90,11 @@ struct LightCardView: View {
             }
             .padding(16)
         }
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.background)
+                .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+        )
         .onAppear {
             // Sync tab with device's current mode
             switch light.selectedMode {

@@ -1,6 +1,6 @@
 //
 //  CBCharacteristicExtensions.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 1/16/21.
 //
@@ -28,51 +28,65 @@ extension CBCharacteristic {
 }
 
 func getConnectedBluetoothDevices() -> [[String: String]]? {
-    // Run the system_profiler command
-
     let task = Process()
     task.launchPath = "/usr/sbin/system_profiler"
-    task.arguments = ["-xml", "SPBluetoothDataType"]
+    task.arguments = ["SPBluetoothDataType"]
 
     let pipe = Pipe()
     task.standardOutput = pipe
+    task.standardError = FileHandle.nullDevice
     task.launch()
 
     let data = pipe.fileHandleForReading.readDataToEndOfFile()
-    guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [[String: Any]] else {
-        print("Failed to deserialize plist")
-        Logger.warn(LogTag.bluetooth, "getConnectedBluetoothDevices Failed to deserialize plist")
+    task.waitUntilExit()
+
+    guard let output = String(data: data, encoding: .utf8) else {
+        Logger.warn(LogTag.bluetooth, "getConnectedBluetoothDevices: failed to read output")
         return nil
     }
 
+    // Parse the text output line by line
+    // Format:
+    //   Connected:
+    //       DeviceName:
+    //           Address: AA:BB:CC:DD:EE:FF
     var result: [[String: String]] = []
-    for dict in plist {
-        if let items = dict["_items"] as? [[String: Any]] {
-            for item in items {
-                for subitem in item {
-                    if subitem.key == "device_connected" {
-                        if let devices = subitem.value as? [Any] {
-                            for dev in devices {
-                                if let devdict = dev as? [String: Any] {
-                                    for (key, value) in devdict {
-                                        if let keyStr = key as? String, let valueDict = value as? [String: Any] {
-                                            if var newDict = valueDict as? [String: String] {
-                                                newDict["name"] = keyStr
-                                                result.append(newDict)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            return result
-                        }
-                    }
-                }
+    let lines = output.components(separatedBy: "\n")
+    var inConnectedSection = false
+    var currentDeviceName: String? = nil
+
+    for line in lines {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+
+        if trimmed == "Connected:" || trimmed == "device_connected:" {
+            inConnectedSection = true
+            continue
+        }
+        if trimmed == "Not Connected:" || trimmed == "device_not_connected:" || trimmed.isEmpty {
+            if trimmed == "Not Connected:" || trimmed == "device_not_connected:" {
+                inConnectedSection = false
+                currentDeviceName = nil
+            }
+            continue
+        }
+
+        if inConnectedSection {
+            if trimmed.hasSuffix(":") && !trimmed.hasPrefix("Address") && !trimmed.hasPrefix("Services")
+                && !trimmed.hasPrefix("Minor") && !trimmed.hasPrefix("Major") && !trimmed.hasPrefix("Vendor")
+                && !trimmed.hasPrefix("Firmware") && !trimmed.hasPrefix("Manufacturer") {
+                // This is a device name line
+                currentDeviceName = String(trimmed.dropLast()) // remove trailing ":"
+            } else if trimmed.hasPrefix("Address:"), let name = currentDeviceName {
+                let address = trimmed.replacingOccurrences(of: "Address: ", with: "")
+                    .trimmingCharacters(in: .whitespaces)
+                result.append(["name": name, "device_address": address])
             }
         }
     }
 
-    Logger.info(LogTag.bluetooth, "getConnectedBluetoothDevices device_connected not found!?")
+    if result.isEmpty {
+        Logger.info(LogTag.bluetooth, "getConnectedBluetoothDevices: no connected devices found")
+    }
 
-    return result
+    return result.isEmpty ? nil : result
 }

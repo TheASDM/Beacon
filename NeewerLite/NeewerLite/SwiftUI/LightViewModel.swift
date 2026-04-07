@@ -1,6 +1,6 @@
 //
 //  LightViewModel.swift
-//  NeewerLite
+//  Beacon
 //
 //  Bridges the existing NeewerLight model (which uses a custom Observable<T>
 //  callback pattern) to SwiftUI's Observation framework, without modifying
@@ -114,6 +114,7 @@ class LightViewModel: Identifiable {
     // MARK: - Control methods (delegate to device)
 
     func togglePower() {
+        Logger.debug("[\(device.rawName)] togglePower: peripheral=\(device.peripheral != nil), characteristic=\(device.deviceCtlCharacteristic != nil)")
         if device.isOn.value {
             device.sendPowerOffRequest()
         } else {

@@ -1,6 +1,6 @@
 //
 //  CodableValue.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 11/5/23.
 //

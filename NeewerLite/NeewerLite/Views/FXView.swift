@@ -1,6 +1,6 @@
 //
 //  FXView.swift
-//  NeewerLite
+//  Beacon
 //
 //  Created by Xu Lian on 10/31/23.
 //
