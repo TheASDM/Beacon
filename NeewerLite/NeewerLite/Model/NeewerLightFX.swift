@@ -72,11 +72,11 @@ class NeewerLightFX: NSObject, Codable {
         set { featureValues["brrUpperValue"] = newValue }
     }
     var cctValue: CGFloat {
-        get { featureValues["cctValue"] ?? 10.0 }
+        get { featureValues["cctValue"] ?? 44.0 }
         set { featureValues["cctValue"] = newValue }
     }
     var cctUpperValue: CGFloat {
-        get { featureValues["cctUpperValue"] ?? 20.0 }
+        get { featureValues["cctUpperValue"] ?? 50.0 }
         set { featureValues["cctUpperValue"] = newValue }
     }
     var gmValue: CGFloat {

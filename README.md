@@ -22,7 +22,7 @@ Originally forked from [keefo/NeewerLite](https://github.com/keefo/NeewerLite) b
 - **FX mode** — 17 lighting effects with speed, brightness, CCT, and color controls
 - **Light Source mode** — preset light source emulations (tungsten, daylight, etc.)
 - **Stream Deck+ plugin** — 16 actions including dials for brightness, temperature, GM, FX speed, and keys for mode switching, FX cycling, source cycling
-- **73 light types** supported with full command patterns
+- **74 light types** supported with full command patterns
 - **URL scheme commands** for automation and Shortcuts integration
 - **Audio-reactive mode** — sync lights to music
 
@@ -106,13 +106,12 @@ open "neewerlite://turnOnLight?light=MyLight"
 # Tested Lights
 
 - Neewer CB100C (type 49) — fully tested, all modes
-- Neewer RGB1200 III (type 87) — power working, CCT/HSI in progress
+- Neewer RGB1200 III (type 87) — fully working: power, CCT, HSI, FX, and source modes (MAC-embedded protocol)
 - Neewer CB60 RGB (type 22) — basic functionality
 
 # What Still Needs Work
 
-- [ ] Fix MAC address discovery on macOS Sonoma/Sequoia (system_profiler format changed)
-- [ ] Finish RGB1200 III protocol support (MAC-embedded CCT/HSI commands)
+- [ ] Fix MAC address discovery on macOS Sonoma/Sequoia (system_profiler format changed — hardcoded MAC workaround in place)
 - [ ] Extract BLE management from AppDelegate into standalone manager
 - [ ] Delete remaining old AppKit view files (~3,000 lines of dead code)
 - [ ] SwiftUI log monitor

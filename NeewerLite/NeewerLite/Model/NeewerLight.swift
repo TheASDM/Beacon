@@ -677,16 +677,40 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         guard let characteristic = deviceCtlCharacteristic else {
             return
         }
-        Logger.debug("send power command via pattern: \(pattern)")
-        var values: [String: Any] = [:]
+        Logger.debug("send command via pattern: \(pattern)")
+        let values: [String: Any] = [:]
         let data = CommandPatternParser.buildCommand(from: pattern, values: values)
-        if !data.isEmpty {
-            write(data: data, to: characteristic)
-            Logger.debug("send power command via pattern: \(pattern) values: \(values) data: \(data.hexEncodedString())")
+        if data.isEmpty {
+            Logger.warn("Pattern-based command failed to build.")
             return
-        } else {
-            Logger.warn("Pattern-based power command failed, falling back to legacy logic.")
         }
+
+        // For MAC-embedded lights, re-wrap CCT-tagged commands (e.g. source presets)
+        // Standard CCT: 78 87 SIZE BRR CCT GM CHECKSUM
+        // MAC-embedded: 78 90 SIZE MAC[6] 87 BRR CCT GM 04 CHECKSUM
+        if supportNewPowerCommand, data.count >= 6 {
+            let bytes = [UInt8](data)
+            if bytes[1] == UInt8(NeewerLightConstant.BleCommand.setCCTLightTag) {
+                let mac = resolveMAC()
+                if !mac.isEmpty {
+                    let payloadStart = 3
+                    let payloadEnd = Int(bytes[2]) + payloadStart
+                    if payloadEnd <= bytes.count - 1 {
+                        var vals = Array(bytes[payloadStart..<payloadEnd]).map { Int($0) }
+                        vals.append(0x04) // dimming curve type
+                        let wrapped = composeSingleCommandWithMac(
+                            NeewerLightConstant.BleCommand.setCCTDataTag, mac,
+                            NeewerLightConstant.BleCommand.setCCTLightTag, vals)
+                        write(data: Data(wrapped), to: characteristic)
+                        Logger.debug("send MAC-embedded CCT command: \(Data(wrapped).hexEncodedString())")
+                        return
+                    }
+                }
+            }
+        }
+
+        write(data: data, to: characteristic)
+        Logger.debug("send command via pattern: \(pattern) data: \(data.hexEncodedString())")
     }
     
     // Send Scene
@@ -695,52 +719,68 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
 
         if let item = ContentManager.shared.fetchLightProperty(lightType: _lightType)
         {
-            if let matchingFx = supportedFX.first(where: { $0.id == fxx.id }) {
-                if let cmdPattern = matchingFx.cmdPattern {
-                    // Compose values for the pattern
-                    // Use matchingFx for needXXX flags (it has the parsed pattern flags)
-                    // but fxx for actual values (it has the user-set feature values)
-                    var values: [String: Any] = [:]
-                    if matchingFx.needSpeed {
-                        values["speed"] = fxx.speedValue
-                    }
-                    if matchingFx.needColor {
-                        values["color"] = fxx.colorValue
-                    }
-                    if matchingFx.needBRR {
-                        values["brr"] = fxx.brrValue
-                    }
-                    if matchingFx.needBRRUpperBound {
-                        values["brr2"] = fxx.brrUpperValue
-                    }
-                    if matchingFx.needCCT {
-                        values["cct"] = fxx.cctValue
-                    }
-                    if matchingFx.needCCTUpperBound {
-                        values["cct2"] = fxx.cctUpperValue
-                    }
-                    if matchingFx.needGM {
-                        values["gm"] = fxx.gmValue + 50
-                    }
-                    if matchingFx.needSAT {
-                        values["sat"] = fxx.satValue
-                    }
-                    if matchingFx.needHUE {
-                        values["hue"] = fxx.hueValue
-                    }
-                    if matchingFx.needHUEUpperBound {
-                        values["hue2"] = fxx.hueUpperValue
-                    }
-                    if matchingFx.needSparks {
-                        values["sparks"] = fxx.sparksValue
-                    }
-                    let data = CommandPatternParser.buildCommand(from: cmdPattern, values: values)
-                    if !data.isEmpty {
-                        cmd = data
+            // 1. MAC-embedded FX for newer lights (RGB1200 III, BH-30S, SL90 Infinity)
+            if supportNewPowerCommand {
+                let mac = resolveMAC()
+                if !mac.isEmpty {
+                    if let matchingFx = supportedFX.first(where: { $0.id == fxx.id }) {
+                        cmd = getNewSceneCommand(mac: mac, matchingFx: matchingFx, fxx: fxx)
+                    } else {
+                        cmd = getSceneCommand(mac, fxx)
                     }
                 }
             }
 
+            // 2. Pattern-based FX from database
+            if cmd.isEmpty {
+                if let matchingFx = supportedFX.first(where: { $0.id == fxx.id }) {
+                    if let cmdPattern = matchingFx.cmdPattern {
+                        // Compose values for the pattern
+                        // Use matchingFx for needXXX flags (it has the parsed pattern flags)
+                        // but fxx for actual values (it has the user-set feature values)
+                        var values: [String: Any] = [:]
+                        if matchingFx.needSpeed {
+                            values["speed"] = fxx.speedValue
+                        }
+                        if matchingFx.needColor {
+                            values["color"] = fxx.colorValue
+                        }
+                        if matchingFx.needBRR {
+                            values["brr"] = fxx.brrValue
+                        }
+                        if matchingFx.needBRRUpperBound {
+                            values["brr2"] = fxx.brrUpperValue
+                        }
+                        if matchingFx.needCCT {
+                            values["cct"] = fxx.cctValue
+                        }
+                        if matchingFx.needCCTUpperBound {
+                            values["cct2"] = fxx.cctUpperValue
+                        }
+                        if matchingFx.needGM {
+                            values["gm"] = fxx.gmValue + 50
+                        }
+                        if matchingFx.needSAT {
+                            values["sat"] = fxx.satValue
+                        }
+                        if matchingFx.needHUE {
+                            values["hue"] = fxx.hueValue
+                        }
+                        if matchingFx.needHUEUpperBound {
+                            values["hue2"] = fxx.hueUpperValue
+                        }
+                        if matchingFx.needSparks {
+                            values["sparks"] = fxx.sparksValue
+                        }
+                        let data = CommandPatternParser.buildCommand(from: cmdPattern, values: values)
+                        if !data.isEmpty {
+                            cmd = data
+                        }
+                    }
+                }
+            }
+
+            // 3. Fallback to legacy
             if cmd.isEmpty {
                 if item.support17FX ?? false {
                     cmd = getSceneValue(UInt8(fxx.id), brightness: CGFloat(fxx.brrValue))
@@ -875,11 +915,63 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         let cctRange = CCTRange()
         let newCctValue = Int(cct).clamped(to: cctRange.minCCT...cctRange.maxCCT)
         let newGmValue = Int(gmm).clamped(to: -50...50) + 50  // convert -50..50 to 0..100
+        let dimmingCurveType = 0x04
         let bArr1: [UInt8] = composeSingleCommandWithMac(
-            NeewerLightConstant.BleCommand.powerNewTag, mac,
+            NeewerLightConstant.BleCommand.setCCTDataTag, mac,
             NeewerLightConstant.BleCommand.setCCTLightTag,
-            [newBrrValue, newCctValue, newGmValue, 0x00, 0x00])
+            [newBrrValue, newCctValue, newGmValue, dimmingCurveType])
         return Data(bArr1)
+    }
+
+    // MAC-embedded FX command: 78 91 [SIZE] [MAC:6] 8B [FX_ID] [params...] [CHECKSUM]
+    // Uses matchingFx for needXXX flags (parsed from fxPatterns), fxx for user-set values
+    private func getNewSceneCommand(mac: String, matchingFx: NeewerLightFX, fxx: NeewerLightFX) -> Data {
+        var vals: [Int] = [Int(fxx.id)]
+
+        if matchingFx.needBRR {
+            vals.append(Int(fxx.brrValue).clamped(to: 0...100))
+        }
+        if matchingFx.needBRRUpperBound {
+            vals.append(Int(fxx.brrUpperValue).clamped(to: 0...100))
+        }
+        if matchingFx.needHUE {
+            let hue = Int(fxx.hueValue).clamped(to: 0...360)
+            vals.append(hue & 0xFF)
+            vals.append((hue & 0xFF00) >> 8)
+        }
+        if matchingFx.needHUEUpperBound {
+            let hue = Int(fxx.hueUpperValue).clamped(to: 0...360)
+            vals.append(hue & 0xFF)
+            vals.append((hue & 0xFF00) >> 8)
+        }
+        if matchingFx.needSAT {
+            vals.append(Int(fxx.satValue).clamped(to: 0...100))
+        }
+        if matchingFx.needCCT {
+            let cctRange = CCTRange()
+            vals.append(Int(fxx.cctValue).clamped(to: cctRange.minCCT...cctRange.maxCCT))
+        }
+        if matchingFx.needCCTUpperBound {
+            let cctRange = CCTRange()
+            vals.append(Int(fxx.cctUpperValue).clamped(to: cctRange.minCCT...cctRange.maxCCT))
+        }
+        if matchingFx.needGM {
+            vals.append(Int(fxx.gmValue).clamped(to: -50...50) + 50)
+        }
+        if matchingFx.needColor && matchingFx.colors.count > 0 {
+            vals.append(Int(fxx.colorValue).clamped(to: 0...matchingFx.colors.count))
+        }
+        if matchingFx.needSpeed {
+            vals.append(Int(fxx.speedValue).clamped(to: 1...10))
+        }
+        if matchingFx.needSparks && matchingFx.sparkLevel.count > 0 {
+            vals.append(Int(fxx.sparksValue).clamped(to: 1...matchingFx.sparkLevel.count))
+        }
+
+        let bArr: [UInt8] = composeSingleCommandWithMac(
+            NeewerLightConstant.BleCommand.setSCEDataTag, mac,
+            NeewerLightConstant.BleCommand.setSCESubTag, vals)
+        return Data(bArr)
     }
 
     func getNewPowerCommand(_ turnOn: Bool) -> Data {
@@ -1081,51 +1173,24 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         // brr range from 0x00 - 0x64
         let newBrrValue: Int = Int(brr).clamped(to: 0...100)
         let newSatValue: Int = Int(sat * 100.0).clamped(to: 0...100)
-        let newHueValue = Int(theHue * 360.0).clamped(to: 0...360)
+        let neewerHue = Int(theHue * 360.0).clamped(to: 0...360)
         let newHue360Value = Int(theHue360).clamped(to: 0...360)
 
-        // Red  7886 0400 0064 643F
-        // Blue 7886 04E7 0064 64B0
-        // Yell 7886 043E 0064 64B0
-        // Gree 7886 0476 0064 643F
-        // Red  7886 0468 0164 643F
-        // Logger.debug("hue \(newHueValue) sat \(newSatValue)")
+        // The color wheel image and CB100C-style lights use clockwise hue
+        // (R→M→B→C→G→Y), but MAC-embedded lights (RGB1200 III, BH-30S) use
+        // standard HSV counter-clockwise (R→Y→G→C→B→M). Invert the hue.
+        let newHueValue = (360 - neewerHue) % 360
 
-        let byteCount = 4 + 6 + 1 + 1
-        var bArr: [Int] = [Int](repeating: 0, count: byteCount + 4)
-
-        bArr[0] = NeewerLightConstant.BleCommand.prefixTag
-        bArr[1] = NeewerLightConstant.BleCommand.setNewRGBLightTag
-        bArr[2] = byteCount
-        // mac address
-        var macArray = mac.split(separator: ":").compactMap { Int($0, radix: 16) }
-        while macArray.count < 6 {
-            macArray.append(0)
-        }
-        bArr[3] = macArray[0]
-        bArr[4] = macArray[1]
-        bArr[5] = macArray[2]
-        bArr[6] = macArray[3]
-        bArr[7] = macArray[4]
-        bArr[8] = macArray[5]
-
-        // sub-tag
-        bArr[9] = NeewerLightConstant.BleCommand.setNewRGBLightSubTag
-
-        // 4 eletements
-        bArr[10] = Int(newHueValue & 0xFF)
-        bArr[11] = Int((newHueValue & 0xFF00) >> 8) // callcuated from rgb
-        bArr[12] = newSatValue // satruation 0x00 ~ 0x64
-        bArr[13] = newBrrValue // brightness
-        bArr[14] = 0 // ??
+        let bArr: [UInt8] = composeSingleCommandWithMac(
+            NeewerLightConstant.BleCommand.setNewRGBLightTag, mac,
+            NeewerLightConstant.BleCommand.setNewRGBLightSubTag,
+            [newHueValue & 0xFF, (newHueValue & 0xFF00) >> 8, newSatValue, newBrrValue, 0])
 
         brrValue.value = newBrrValue
         hueValue.value = newHue360Value
         satValue.value = newSatValue
 
-        let bArr1: [UInt8] = appendCheckSum(bArr)
-
-        return NSData(bytes: bArr1, length: bArr1.count) as Data
+        return Data(bArr)
     }
 
     private func getSceneValue(_ scene: UInt8, brightness brr: CGFloat) -> Data {

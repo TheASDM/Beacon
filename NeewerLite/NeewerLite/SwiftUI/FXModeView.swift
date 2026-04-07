@@ -130,12 +130,12 @@ struct FXModeView: View {
 
     private func sendFX() {
         guard let fx = selectedFX else { return }
-        if fx.needSpeed { fx.featureValues["speed"] = CGFloat(speed) }
-        if fx.needBRR { fx.featureValues["brr"] = CGFloat(brr) }
-        if fx.needCCT { fx.featureValues["cct"] = CGFloat(cctVal) }
-        if fx.needGM { fx.featureValues["gm"] = CGFloat(gmVal) }
-        if fx.needHUE { fx.featureValues["hue"] = CGFloat(hueVal) }
-        if fx.needSAT { fx.featureValues["sat"] = CGFloat(satVal) }
+        if fx.needSpeed { fx.speedValue = Int(speed) }
+        if fx.needBRR { fx.brrValue = CGFloat(brr) }
+        if fx.needCCT { fx.cctValue = CGFloat(cctVal) }
+        if fx.needGM { fx.gmValue = CGFloat(gmVal) }
+        if fx.needHUE { fx.hueValue = CGFloat(hueVal) }
+        if fx.needSAT { fx.satValue = CGFloat(satVal) }
         light.sendScene(fx)
     }
 }
