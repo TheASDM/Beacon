@@ -10,6 +10,7 @@
 import Foundation
 import Observation
 import CoreBluetooth
+import AppKit
 
 @Observable
 class LightViewModel: Identifiable {
