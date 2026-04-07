@@ -130,7 +130,7 @@ class ContentManager {
 
     // JSON Database URL
     private let jsonDatabaseURL = URL(
-        string: "https://raw.githubusercontent.com/keefo/NeewerLite/main/Database/lights.json")!
+        string: "https://raw.githubusercontent.com/TheASDM/NeewerLite-CB100C/main/Database/lights.json")!
     private var localDatabaseURL: URL {
         let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first!
