@@ -4,10 +4,11 @@ struct LightCardView: View {
     var light: LightViewModel
     @State private var selectedTab: String = "cct"
     @State private var showRename: Bool = false
+    @State private var showForgetConfirm: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header: name + power toggle
+            // Header: name + actions + power toggle
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(light.displayName)
@@ -17,6 +18,28 @@ struct LightCardView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+
+                // Rename button
+                Button {
+                    showRename = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.borderless)
+                .help("Rename")
+
+                // Forget button
+                Button {
+                    showForgetConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.red)
+                }
+                .buttonStyle(.borderless)
+                .help("Forget light")
+
                 // Connection indicator
                 if !light.isConnected {
                     Image(systemName: "wifi.slash")
@@ -78,6 +101,14 @@ struct LightCardView: View {
             case .SCEMode: selectedTab = "fx"
             case .SRCMode: selectedTab = "source"
             }
+        }
+        .alert("Forget Light", isPresented: $showForgetConfirm) {
+            Button("Cancel", role: .cancel) {}
+            Button("Forget", role: .destructive) {
+                light.forget()
+            }
+        } message: {
+            Text("Remove \"\(light.displayName)\" from your lights? You can re-add it by scanning.")
         }
         .sheet(isPresented: $showRename) {
             RenameSheet(

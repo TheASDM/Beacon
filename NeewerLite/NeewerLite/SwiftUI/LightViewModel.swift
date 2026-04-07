@@ -153,4 +153,10 @@ class LightViewModel: Identifiable {
     func rename(_ name: String) {
         device.userLightName.value = name
     }
+
+    func forget() {
+        guard let appDelegate = NSApp.delegate as? AppDelegate else { return }
+        appDelegate.forgetLight(device)
+        AppState.shared.removeLight(identifier: id)
+    }
 }
