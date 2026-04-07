@@ -563,40 +563,42 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         var cmd: Data = Data()
         Logger.debug("setCCTLightValues brr: \(brr) cct: \(cct) gmm: \(gmm)")
 
-        // 1. Try to use commandPatterns from database if available
+        let cctRange = CCTRange()
+        let newBrrValue = Int(brr).clamped(to: 0...100)
+        let newCctValue = Int(cct).clamped(to: cctRange.minCCT...cctRange.maxCCT)
+        let newGmValue = Int(gmm).clamped(to: -50...50)
+        gmmValue.value = newGmValue
+        cctValue.value = newCctValue
+        brrValue.value = newBrrValue
+
+        // 1. MAC-embedded command for newer lights (RGB1200 III, BH-30S, SL90 Infinity)
+        if supportNewPowerCommand {
+            cmd = getNewCCTLightCommand(mac: _macAddress ?? "", brightness: brr, cct: cct, gmm: gmm)
+            lightMode = .CCTMode
+            guard let characteristic = deviceCtlCharacteristic else { return }
+            write(data: cmd, to: characteristic)
+            return
+        }
+
+        // 2. Try to use commandPatterns from database if available
         if let pattern = findCommandPatternFromDB("cct") {
-            Logger.debug("send CCT command via pattern: \(pattern)")
-            // Compose values for the pattern
             var values: [String: Any] = [:]
-            // Clamp and convert values as needed
-            let cctRange = CCTRange()
-            let newBrrValue = Int(brr).clamped(to: 0...100)
-            let newCctValue = Int(cct).clamped(to: cctRange.minCCT...cctRange.maxCCT)
-            let newGmValue = Int(gmm).clamped(to: -50...50)
             values["brr"] = newBrrValue
             values["cct"] = newCctValue
             values["gm"] = newGmValue + 50
-            
-            gmmValue.value = newGmValue
-            cctValue.value = newCctValue
-            brrValue.value = newBrrValue
 
             cmd = CommandPatternParser.buildCommand(from: pattern, values: values)
             if !cmd.isEmpty {
                 lightMode = .CCTMode
                 guard let characteristic = deviceCtlCharacteristic else { return }
                 write(data: cmd, to: characteristic)
-                Logger.debug("send CCT command via pattern: \(pattern) values: \(values) data: \(cmd.hexEncodedString())")
                 return
-            } else {
-                Logger.warn("Pattern-based CCT command failed, falling back to legacy logic.")
             }
         }
 
-        // Fallback to legacy logic
-        if supportNewPowerCommand {
-            // MAC-embedded command format for newer lights (RGB1200 III, BH-30S, etc.)
-            cmd = getNewCCTLightCommand(mac: _macAddress ?? "", brightness: brr, cct: cct, gmm: gmm)
+        // 3. Fallback to legacy logic
+        if supportGMRange.value {
+            cmd = getCCTDATALightCommand(brightness: brr, correlatedColorTemperature: cct, gmm: gmm)
         } else if supportGMRange.value {
             cmd = getCCTDATALightCommand(brightness: brr, correlatedColorTemperature: cct, gmm: gmm)
         } else if supportRGB {
@@ -614,49 +616,40 @@ class NeewerLight: NSObject, ObservableNeewerLightProtocol {
         var cmd: Data = Data()
         Logger.debug("hue: \(hue) hue360: \(hue360) sat: \(sat) brr100: \(brr100)")
 
-        // 1. Try to use commandPatterns from database if available
+        let newHue360Value = Int(hue360).clamped(to: 0...360)
+        let newBrrValue: Int = Int(brr100).clamped(to: 0...100)
+        let newSatValue: Int = Int(sat * 100.0).clamped(to: 0...100)
+        brrValue.value = newBrrValue
+        hueValue.value = newHue360Value
+        satValue.value = newSatValue
+
+        // 1. MAC-embedded command for newer lights
+        if supportNewHSICommand {
+            cmd = getNewHSILightCommand(mac: _macAddress ?? "", brightness: brr100, hue: hue, hue360: hue360, satruation: sat)
+            lightMode = .HSIMode
+            guard let characteristic = deviceCtlCharacteristic else { return }
+            write(data: cmd, to: characteristic)
+            return
+        }
+
+        // 2. Try to use commandPatterns from database
         if let pattern = findCommandPatternFromDB("hsi") {
-            Logger.debug("send HSI command via pattern: \(pattern)")
             var values: [String: Any] = [:]
-            // Clamp and convert values as neededvar ratio = 100.0
-            let newHue360Value = Int(hue360).clamped(to: 0...360)
-            let newBrrValue: Int = Int(brr100).clamped(to: 0...100)
-            let newSatValue: Int = Int(sat * 100.0).clamped(to: 0...100)
-            // If your pattern uses "i" for intensity, set it here. If "w" (white), set as needed.
             values["hue"] = newHue360Value
             values["sat"] = newSatValue
             values["brr"] = newBrrValue
-  
-            brrValue.value = newBrrValue
-            hueValue.value = newHue360Value
-            satValue.value = newSatValue
 
             cmd = CommandPatternParser.buildCommand(from: pattern, values: values)
             if !cmd.isEmpty {
                 lightMode = .HSIMode
                 guard let characteristic = deviceCtlCharacteristic else { return }
                 write(data: cmd, to: characteristic)
-                Logger.debug("send HSI command via pattern: \(pattern) values: \(values) data: \(cmd.hexEncodedString())")
                 return
-            } else {
-                Logger.warn("Pattern-based HSI command failed, falling back to legacy logic.")
             }
         }
 
-        // Fallback to legacy logic
-        var useNew = self.supportNewHSICommand
-        
-        if self.altHSICommand
-        {
-            useNew = !useNew
-            Logger.info("user select alt menu, to send \(useNew ? "new" : "old") HSI command")
-        }
-        
-        if useNew {
-            cmd = getNewHSILightCommand(mac: _macAddress ?? "", brightness: brr100, hue: hue, hue360: hue360, satruation: sat)
-        } else {
-            cmd = getHSILightCommand(brightness: brr100, hue: hue, hue360: hue360, satruation: sat)
-        }
+        // 3. Fallback to legacy logic
+        cmd = getHSILightCommand(brightness: brr100, hue: hue, hue360: hue360, satruation: sat)
         
         // new command start with 78,8F
         // old command start with 78,87
